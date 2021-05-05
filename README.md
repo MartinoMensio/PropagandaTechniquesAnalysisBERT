@@ -18,6 +18,9 @@ This model is a BERT based model to make predictions of propaganda techniques in
 news articles in English. The model is described in
 [this paper](https://propaganda.qcri.org/papers/EMNLP_2019__Fine_Grained_Propaganda_Detection.pdf).
 
+This repository contains a REST server and Docker container to perform the propaganda detection. The official API documented at https://app.swaggerhub.com/apis-docs/yifan2019/Tanbih/ is rate-limited so this repo provides the server.
+This repository comes from https://huggingface.co/QCRI/PropagandaTechniquesAnalysis-en-BERT
+
 
 ## Model description
 
