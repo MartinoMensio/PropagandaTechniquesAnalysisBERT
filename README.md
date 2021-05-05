@@ -21,6 +21,14 @@ news articles in English. The model is described in
 This repository contains a REST server and Docker container to perform the propaganda detection. The official API documented at https://app.swaggerhub.com/apis-docs/yifan2019/Tanbih/ is rate-limited so this repo provides the server.
 This repository comes from https://huggingface.co/QCRI/PropagandaTechniquesAnalysis-en-BERT
 
+Instructions:
+```bash
+# not necessary, only for building a new image
+docker build -t martinomensio/propaganda-techniques .
+# outside_port(any you want):inside port(8899)
+docker run -it --name propaganda-techniques -p 8899:8899 martinomensio/propaganda-techniques
+```
+
 
 ## Model description
 
