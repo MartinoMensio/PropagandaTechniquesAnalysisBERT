@@ -39,8 +39,12 @@ class BackgroundTaskState:
 
     def __call__(self):
         self.state = 'running'
-        self.result = self.target(**self.args)
-        self.state = 'done'
+        try:
+            self.result = self.target(**self.args)
+            self.state = 'done'
+        except Exception as e:
+            print(e)
+            self.state = 'error'
 
     def get_state(self):
         return self.state
@@ -65,6 +69,11 @@ def get_async_task(key: str):
     task = tasks[key]
     if task.state == 'done':
         return task.result
+    elif task.state == 'error':
+        return {
+            'error': 'some other errors',
+            'state': task.state
+        }
     else:
         return {
             'error': 'result is not ready',
@@ -85,7 +94,15 @@ def compute_on_text(request: AnalysisRequest):
     for sent in sents:
         sent = nlp(sent)
         sent_res = compute_on_sentence(sent)
-        sentence_propaganda.append(sent_res)
+        if sent_res:
+            sentence_propaganda.append(sent_res)
+        else:
+            raise ValueError('Something is wrong')
+            # more than 512 tokens
+            for s in sent.sents:
+                # try with sentencizer
+                sent_res = compute_on_sentence(sent, trim=True)
+                sentence_propaganda.append(sent_res)
     #
     return {
         # 'article_key'
@@ -95,11 +112,16 @@ def compute_on_text(request: AnalysisRequest):
     }
 
 
-def compute_on_sentence(sentence: Span):
+def compute_on_sentence(sentence: Span, trim=True):
     text = sentence.text
-    inputs = tokenizer.encode_plus(text, return_tensors="pt")
+    if trim:
+        # TODO: can recognise trimmmed one in db if len(tokens_old) == 510
+        inputs = tokenizer.encode_plus(text, return_tensors="pt", max_length=512, truncation=True)
+    else:
+        inputs = tokenizer.encode_plus(text, return_tensors="pt")
     if inputs.input_ids.shape[1] > 512:
         print('there will be an error soon! Input sequence too long')
+        return False
     outputs = model(**inputs)
 
     sequence_class_index = torch.argmax(outputs.sequence_logits, dim=-1)
@@ -122,6 +144,8 @@ def compute_on_sentence(sentence: Span):
         # print(tag, align)
         if len(align) > 1:
             print('error realigning')
+        if not align:
+            continue
         spacy_index = align[0]
         votes = tags_rearranged_spacy[spacy_index]
         if votes == None:
